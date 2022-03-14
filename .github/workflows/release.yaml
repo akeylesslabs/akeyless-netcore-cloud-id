@@ -1,0 +1,31 @@
+name: publish to nuget
+on:
+ push:
+    tags:
+      - '*'
+jobs:
+  publish:
+    name: build, pack & publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.23
+
+      # Publish
+      - name: publish on version change
+        id: publish_nuget
+        uses: rohith/publish-nuget@v2
+        with:
+          PROJECT_FILE_PATH: akeyless-dotnet-cloudid.csproj
+          PACKAGE_NAME: akeyless.Cloudid
+          VERSION_STATIC: ${{github.ref_name}}
+
+          # Flag to toggle git tagging, enabled by default
+          TAG_COMMIT: false
+
+          # API key to authenticate with NuGet server
+          # NUGET_KEY: ${{secrets.NUGET_API_KEY}}
