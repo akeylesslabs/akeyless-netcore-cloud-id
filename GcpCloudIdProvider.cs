@@ -1,6 +1,7 @@
-namespace akeyless.Cloudid;
-
 using Google.Apis.Auth.OAuth2;
+using System.Threading.Tasks;
+
+namespace akeyless.Cloudid {
 
 public class GcpCloudIdProvider : ICloudIdProvider
 {
@@ -28,4 +29,5 @@ public class GcpCloudIdProvider : ICloudIdProvider
 
         return token;
     }
+}
 }

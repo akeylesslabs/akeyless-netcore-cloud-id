@@ -1,7 +1,9 @@
-namespace akeyless.Cloudid;
-
 using Newtonsoft.Json;
+using System.Threading.Tasks;
+using System.Net.Http;
+using System;
 
+namespace akeyless.Cloudid {
 
 public class AzureCloudIdProvider : ICloudIdProvider
 {
@@ -41,4 +43,5 @@ public class AzureCloudIdProvider : ICloudIdProvider
 
         return token;
     }
+}
 }

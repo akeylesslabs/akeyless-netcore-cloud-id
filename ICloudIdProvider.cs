@@ -1,6 +1,11 @@
-namespace akeyless.Cloudid;
+using System.Threading.Tasks;
 
-public interface ICloudIdProvider {
-    Task<string> GetCloudIdAsync();
-    string GetCloudId();
+namespace akeyless.Cloudid
+{
+
+    public interface ICloudIdProvider
+    {
+        Task<string> GetCloudIdAsync();
+        string GetCloudId();
+    }
 }

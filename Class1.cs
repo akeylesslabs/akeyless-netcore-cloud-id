@@ -1,12 +1,15 @@
-﻿namespace akeyless.Cloudid;
+﻿using System;
 
-public class Test
-{
-    static void Main(string[] args)
+namespace akeyless.Cloudid {
+
+    public class Test
     {
-        var cloudId = args[0];
-        var cloudIdProvider = CloudIdProviderFactory.GetCloudIdProvider(cloudId);
-        Console.WriteLine(cloudIdProvider.GetCloudId());
-    }
+        static void Main(string[] args)
+        {
+            var cloudId = args[0];
+            var cloudIdProvider = CloudIdProviderFactory.GetCloudIdProvider(cloudId);
+            Console.WriteLine(cloudIdProvider.GetCloudId());
+        }
 
+    }
 }
