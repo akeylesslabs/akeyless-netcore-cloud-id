@@ -4,7 +4,7 @@ Akeyless CloudId Provider
 
 The purpose of this package is to exteact the required "cloudid" to authenticate to akeyless using cloud authorization providers.
 
-For more information, please visit [http://akeyless.io](http://akeyless.io)
+For more information, please visit [https://akeyless.io](https://akeyless.io)
 
 ## Publishing a new version
 Change the version in the .csproj file, tag the commit with a new tag (ie. v1.1.1) and push to the repository.
