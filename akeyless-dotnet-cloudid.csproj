@@ -5,6 +5,13 @@
     <RootNamespace>akeyless.Cloudid</RootNamespace>
     <ImplicitUsings>false</ImplicitUsings>
     <Nullable>disable</Nullable>
+
+    <Authors>akeyless.io</Authors>
+    <Company>akeyless.io</Company>
+    <Title>Akeyless CloudId library</Title>
+    <Description>A library to get cloud id to use with akeyless sdk</Description>
+    <RepositoryUrl>https://github.com/akeylesslabs/akeyless-netcore-cloud-id</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
