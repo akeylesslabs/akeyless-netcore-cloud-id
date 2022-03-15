@@ -7,7 +7,7 @@ The purpose of this package is to exteact the required "cloudid" to authenticate
 For more information, please visit [http://akeyless.io](http://akeyless.io)
 
 ## Publishing a new version
-Tag the commit with a new tag (ie. v1.1.1) and push to the repository.
+Change the version in the .csproj file, tag the commit with a new tag (ie. v1.1.1) and push to the repository.
 The workflow will build and publish a new version to the artifactory repository.
 
 ## Frameworks supported

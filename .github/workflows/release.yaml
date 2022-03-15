@@ -25,7 +25,6 @@ jobs:
         with:
           PROJECT_FILE_PATH: akeyless-dotnet-cloudid.csproj
           PACKAGE_NAME: akeyless.Cloudid
-          VERSION_STATIC: ${{env.RELEASE_VERSION}}
 
           # Flag to toggle git tagging, enabled by default
           TAG_COMMIT: false

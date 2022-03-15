@@ -12,6 +12,8 @@
     <Description>A library to get cloud id to use with akeyless sdk</Description>
     <RepositoryUrl>https://github.com/akeylesslabs/akeyless-netcore-cloud-id</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+
+    <Version>0.0.3</Version>
   </PropertyGroup>
 
   <ItemGroup>
