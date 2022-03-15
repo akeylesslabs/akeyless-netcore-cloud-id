@@ -10,7 +10,7 @@ public class AzureCloudIdProvider : ICloudIdProvider
     private class TokenResult {
 
         [JsonProperty("access_token")]
-        public string? AccessToken {get; set;}
+        public string AccessToken {get; set;}
     }
 
     public async Task<string> GetCloudIdAsync()

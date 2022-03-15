@@ -1,33 +1,35 @@
 using Google.Apis.Auth.OAuth2;
 using System.Threading.Tasks;
 
-namespace akeyless.Cloudid {
-
-public class GcpCloudIdProvider : ICloudIdProvider
+namespace akeyless.Cloudid
 {
-    public async Task<string> GetCloudIdAsync() {
-        var creds = await GoogleCredential.GetApplicationDefaultAsync();
-        
-        var options = OidcTokenOptions.FromTargetAudience("akeyless.io");
 
-        var oidcToken = await creds.GetOidcTokenAsync(options);
-
-        var token = await oidcToken.GetAccessTokenAsync();
-
-        return System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(token));
-    }
-
-    public string GetCloudId()
+    public class GcpCloudIdProvider : ICloudIdProvider
     {
-        string token = "";
-        var cont = GetCloudIdAsync().ContinueWith(cloudIdTaskRes =>
+        public async Task<string> GetCloudIdAsync()
         {
-            token = cloudIdTaskRes.Result;
-        });
+            var creds = await GoogleCredential.GetApplicationDefaultAsync();
 
-        cont.Wait();
+            var options = OidcTokenOptions.FromTargetAudience("akeyless.io");
 
-        return token;
+            var oidcToken = await creds.GetOidcTokenAsync(options);
+
+            var token = await oidcToken.GetAccessTokenAsync();
+
+            return System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(token));
+        }
+
+        public string GetCloudId()
+        {
+            string token = "";
+            var cont = GetCloudIdAsync().ContinueWith(cloudIdTaskRes =>
+            {
+                token = cloudIdTaskRes.Result;
+            });
+
+            cont.Wait();
+
+            return token;
+        }
     }
-}
 }
