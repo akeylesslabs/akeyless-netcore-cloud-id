@@ -22,7 +22,7 @@ namespace akeyless.Cloudid
             }
             return hex.ToString();
         }
-        public string SignRequest(string awsAccessId, string awsSecretAccessKey)
+        public string SignRequest(string awsAccessId, string awsSecretAccessKey, string awsSecurityToken)
         {
             var algorithm = "AWS4-HMAC-SHA256";
             var service = "sts";
@@ -41,11 +41,19 @@ namespace akeyless.Cloudid
             var canonicalUri = "/";
             var canonicalQuerystring = "";
             var signedHeaders = "content-length;content-type;host;x-amz-date";
+            if (!String.IsNullOrEmpty(awsSecurityToken)) {
+                signedHeaders += ";x-amz-security-token";
+            }
 
             var hasher = SHA256.Create();
             var bodyDigest = ToHexString(hasher.ComputeHash(Encoding.UTF8.GetBytes(body)));
 
             var canonicalHeaders = string.Format("content-length:{0}\ncontent-type:{1}\nhost:{2}\nx-amz-date:{3}\n", body.Length, contentType, host, amzDate);
+            if (!String.IsNullOrEmpty(awsSecurityToken)) {
+                canonicalHeaders +=  string.Format("x-amz-security-token:{0}\n", awsSecurityToken);
+            }
+          
+
 
             var canonicalRequest = string.Format("{0}\n{1}\n{2}\n{3}\n{4}\n{5}", method, canonicalUri, canonicalQuerystring, canonicalHeaders, signedHeaders, bodyDigest);
 
@@ -71,6 +79,9 @@ namespace akeyless.Cloudid
             headers["Content-Type"] = new string[] { contentType };
             headers["Host"] = new string[] { host };
             headers["X-Amz-Date"] = new string[] { amzDate };
+            if (!String.IsNullOrEmpty(awsSecurityToken)) {
+                headers["X-Amz-Security-Token"] = new string[] { awsSecurityToken };
+            }
 
             var headersJson = JsonConvert.SerializeObject(headers);
 
@@ -89,17 +100,32 @@ namespace akeyless.Cloudid
         }
 
         public async Task<string> GetCloudIdAsync()
-        {
+        {            
             var chain = new CredentialProfileStoreChain();
             AWSCredentials awsCredentials;
 
-            chain.TryGetAWSCredentials("default", out awsCredentials);
+            // First try to take credentials from local file
+            var success = chain.TryGetAWSCredentials("default", out awsCredentials);
+            if (success) {
+                var creds = await awsCredentials.GetCredentialsAsync();
+                var accessKey = creds.AccessKey;
+                var secretKey = creds.SecretKey;
+                var securityToken = creds.Token;            
+                return SignRequest(accessKey, secretKey, securityToken);
+            }
 
-            var creds = await awsCredentials.GetCredentialsAsync();
-            var accessKey = creds.AccessKey;
-            var secretKey = creds.SecretKey;
-
-            return SignRequest(accessKey, secretKey);
+            // if failed, take from current session
+            try {
+                var profileCreds = new Amazon.Runtime.InstanceProfileAWSCredentials();
+                var creds = await profileCreds.GetCredentialsAsync();
+                var accessKey = creds.AccessKey;
+                var secretKey = creds.SecretKey;
+                var securityToken = creds.Token;
+                return SignRequest(accessKey, secretKey, securityToken);
+            } catch (Exception)
+            {
+                throw new Exception("Failed to get AWS credentials");
+            }
         }
 
         public string GetCloudId()
