@@ -17,7 +17,7 @@ The workflow will build and publish a new version to the artifactory repository.
 
 ## Dependancies
 .NETStandard 2.0
-AWSSDK.Core (>= 3.7.8.9)
+AWSSDK.Core (>= 3.7.105.13)
 Google.Apis.Auth (>= 1.56.0)
 Newtonsoft.Json (>= 13.0.1)
 
