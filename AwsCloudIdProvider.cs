@@ -114,6 +114,22 @@ namespace akeyless.Cloudid
                 return SignRequest(accessKey, secretKey, securityToken);
             }
 
+            // if failed, try to take from environment
+            // Apperantly lambda functions use env vars and not profiles
+             try {
+                var profileCreds = new Amazon.Runtime.EnvironmentVariablesAWSCredentials();
+                var creds = await profileCreds.GetCredentialsAsync();
+                var accessKey = creds.AccessKey;
+                var secretKey = creds.SecretKey;
+                var securityToken = creds.Token;
+                if (accessKey != "" && secretKey != "") {
+                    return SignRequest(accessKey, secretKey, securityToken);
+                }
+            } catch (Exception)
+            {
+                // Do nothing on failure, since we want to try the Instance Profile
+            }
+
             // if failed, take from current session
             try {
                 var profileCreds = new Amazon.Runtime.InstanceProfileAWSCredentials();
