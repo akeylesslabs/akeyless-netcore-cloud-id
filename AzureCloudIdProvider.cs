@@ -1,3 +1,5 @@
+using Azure.Core;
+using Azure.Identity;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 using System.Net.Http;
@@ -7,30 +9,22 @@ namespace akeyless.Cloudid {
 
 public class AzureCloudIdProvider : ICloudIdProvider
 {
-    private class TokenResult {
-
-        [JsonProperty("access_token")]
-        public string AccessToken {get; set;}
-    }
-
     public async Task<string> GetCloudIdAsync()
     {
-        var client = new HttpClient();
-        client.DefaultRequestHeaders.Add("Metadata", "true");
+        string[] scopes = new string[] { "https://management.azure.com/.default" };
 
-        var response = await client.GetAsync("http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/");
-        response.EnsureSuccessStatusCode();
-
-        string responseBody = response.Content.ReadAsStringAsync().Result;
-
-        var tokenObj = JsonConvert.DeserializeObject<TokenResult>(responseBody);
-
-        if (tokenObj != null && !string.IsNullOrEmpty(tokenObj.AccessToken)) {
-            return System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(tokenObj.AccessToken));
+        var credential = new DefaultAzureCredential();
+        
+        var tokenRequestContext = new TokenRequestContext(scopes);
+        var accessToken = await credential.GetTokenAsync(tokenRequestContext);
+                
+        if (!string.IsNullOrEmpty(accessToken.Token)) {
+            return System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(accessToken.Token));
         } else {
             throw new Exception("Failed to get access token");
         }
     }
+
     public string GetCloudId()
     {
         string token = "";

@@ -13,11 +13,12 @@
     <RepositoryUrl>https://github.com/akeylesslabs/akeyless-netcore-cloud-id</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
 
-    <Version>0.0.5</Version>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="AWSSDK.Core" Version="3.7.105.13" />
+    <PackageReference Include="Azure.Identity" Version="1.13.2" />
     <PackageReference Include="Google.Apis.Auth" Version="1.56.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
