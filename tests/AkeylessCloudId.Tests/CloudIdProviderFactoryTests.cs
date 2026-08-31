@@ -35,9 +35,9 @@ namespace AkeylessCloudId.Tests
         }
 
         [Fact]
-        public void GetCloudIdProvider_AliCloud_ReturnsAlibabaProvider()
+        public void GetCloudIdProvider_Alicloud_ReturnsAlibabaProvider()
         {
-            var provider = CloudIdProviderFactory.GetCloudIdProvider("ali_cloud");
+            var provider = CloudIdProviderFactory.GetCloudIdProvider("alicloud");
 
             Assert.IsType<AlibabaCloudIdProvider>(provider);
             Assert.IsAssignableFrom<ICloudIdProvider>(provider);

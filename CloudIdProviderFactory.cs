@@ -19,7 +19,7 @@ namespace akeyless.Cloudid
             {
                 return new GcpCloudIdProvider();
             }
-            else if (accType == "ali_cloud")
+            else if (accType == "alicloud")
             {
                 return new AlibabaCloudIdProvider();
             }
