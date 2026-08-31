@@ -22,6 +22,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>AkeylessCloudId.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AWSSDK.Core" Version="3.7.105.13" />
     <PackageReference Include="Azure.Identity" Version="1.13.2" />
     <PackageReference Include="Google.Apis.Auth" Version="1.56.0" />
