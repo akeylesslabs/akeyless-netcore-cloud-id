@@ -34,6 +34,15 @@ namespace AkeylessCloudId.Tests
             Assert.IsAssignableFrom<ICloudIdProvider>(provider);
         }
 
+        [Fact]
+        public void GetCloudIdProvider_AliCloud_ReturnsAlibabaProvider()
+        {
+            var provider = CloudIdProviderFactory.GetCloudIdProvider("ali_cloud");
+
+            Assert.IsType<AlibabaCloudIdProvider>(provider);
+            Assert.IsAssignableFrom<ICloudIdProvider>(provider);
+        }
+
         [Theory]
         [InlineData("unknown")]
         [InlineData("AWS_IAM")]   // case sensitive: must not match "aws_iam"
