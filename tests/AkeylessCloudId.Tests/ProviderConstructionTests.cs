@@ -29,5 +29,12 @@ namespace AkeylessCloudId.Tests
             var provider = new AwsCloudIdProvider();
             Assert.IsAssignableFrom<ICloudIdProvider>(provider);
         }
+
+        [Fact]
+        public void AlibabaProvider_ImplementsInterface()
+        {
+            var provider = new AlibabaCloudIdProvider();
+            Assert.IsAssignableFrom<ICloudIdProvider>(provider);
+        }
     }
 }
