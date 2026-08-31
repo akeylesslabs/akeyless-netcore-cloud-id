@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,21 +17,32 @@ namespace akeyless.Cloudid
         internal const string StsApiAction = "GetCallerIdentity";
         internal const string StsApiFormat = "JSON";
         internal const string SignatureMethod = "HMAC-SHA1";
+        internal const string EcsMetadataBaseUrl = "http://100.100.100.200";
+        internal const string EcsMetadataTokenPath = "/latest/api/token";
+        internal const string EcsRamCredentialsPath = "/latest/meta-data/ram/security-credentials/";
+        internal const string EcsMetadataTokenHeader = "X-aliyun-ecs-metadata-token";
+        internal const string EcsMetadataTokenTtlHeader = "X-aliyun-ecs-metadata-token-ttl-seconds";
+        internal const string EcsMetadataTokenTtlSeconds = "60";
+
+        private readonly HttpMessageHandler _metadataHandler;
+
+        public AlibabaCloudIdProvider()
+        {
+        }
+
+        internal AlibabaCloudIdProvider(HttpMessageHandler metadataHandler)
+        {
+            _metadataHandler = metadataHandler;
+        }
 
         public string GetCloudId()
         {
-            string token = "";
-            var cont = GetCloudIdAsync().ContinueWith(cloudIdTaskRes =>
-            {
-                token = cloudIdTaskRes.Result;
-            });
-            cont.Wait();
-            return token;
+            return GetCloudIdAsync().ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         public async Task<string> GetCloudIdAsync()
         {
-            var creds = await ResolveCredentialsAsync();
+            var creds = await ResolveCredentialsAsync().ConfigureAwait(false);
             var region = ResolveRegion();
             if (string.IsNullOrEmpty(region))
             {
@@ -133,7 +145,53 @@ namespace akeyless.Cloudid
             return "";
         }
 
-        private static async Task<AlibabaCredentials> ResolveCredentialsAsync()
+        internal static bool IsTruthyEnvValue(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+            value = value.Trim();
+            return value.Equals("true", StringComparison.OrdinalIgnoreCase)
+                   || value.Equals("1", StringComparison.OrdinalIgnoreCase)
+                   || value.Equals("yes", StringComparison.OrdinalIgnoreCase);
+        }
+
+        internal static bool IsImdsV1Disabled()
+        {
+            return IsTruthyEnvValue(Environment.GetEnvironmentVariable("ALIBABA_CLOUD_IMDSV1_DISABLED"))
+                   || IsTruthyEnvValue(Environment.GetEnvironmentVariable("ALIBABA_CLOUD_IMDSV1_DISABLE"));
+        }
+
+        internal static HttpRequestMessage CreateImdsV2TokenRequest()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Put, EcsMetadataBaseUrl + EcsMetadataTokenPath);
+            request.Headers.TryAddWithoutValidation(EcsMetadataTokenTtlHeader, EcsMetadataTokenTtlSeconds);
+            return request;
+        }
+
+        internal static HttpRequestMessage CreateImdsGetRequest(string url, string token)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrEmpty(token))
+            {
+                request.Headers.TryAddWithoutValidation(EcsMetadataTokenHeader, token);
+            }
+            return request;
+        }
+
+        internal static string FirstMetadataLine(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return "";
+            }
+            var trimmed = value.Trim();
+            var newline = trimmed.IndexOfAny(new[] { '\r', '\n' });
+            return newline < 0 ? trimmed : trimmed.Substring(0, newline).Trim();
+        }
+
+        private async Task<AlibabaCredentials> ResolveCredentialsAsync()
         {
             var accessKeyId = FirstEnv("ALIBABA_CLOUD_ACCESS_KEY_ID", "ALICLOUD_ACCESS_KEY");
             var accessKeySecret = FirstEnv("ALIBABA_CLOUD_ACCESS_KEY_SECRET", "ALICLOUD_SECRET_KEY");
@@ -142,24 +200,72 @@ namespace akeyless.Cloudid
             {
                 return new AlibabaCredentials(accessKeyId, accessKeySecret, securityToken);
             }
-            return await ResolveEcsRamRoleCredentialsAsync();
+            return await ResolveEcsRamRoleCredentialsAsync().ConfigureAwait(false);
         }
 
-        private static async Task<AlibabaCredentials> ResolveEcsRamRoleCredentialsAsync()
+        private async Task<AlibabaCredentials> ResolveEcsRamRoleCredentialsAsync()
         {
-            using (var client = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(2) })
+            using (var client = CreateMetadataClient())
             {
-                var roleName = (await client.GetStringAsync("http://100.100.100.200/latest/meta-data/ram/security-credentials/")).Trim();
+                string token = null;
+                try
+                {
+                    token = await FetchImdsV2TokenAsync(client).ConfigureAwait(false);
+                }
+                catch (Exception) when (!IsImdsV1Disabled())
+                {
+                    token = null;
+                }
+
+                var roleName = FirstMetadataLine(await GetMetadataAsync(client,
+                    EcsMetadataBaseUrl + EcsRamCredentialsPath, token).ConfigureAwait(false));
                 if (string.IsNullOrEmpty(roleName))
                 {
                     throw new Exception("alibaba credentials are missing access key id or secret");
                 }
-                var body = await client.GetStringAsync("http://100.100.100.200/latest/meta-data/ram/security-credentials/" + roleName);
+
+                var body = await GetMetadataAsync(client,
+                    EcsMetadataBaseUrl + EcsRamCredentialsPath + Uri.EscapeDataString(roleName), token)
+                    .ConfigureAwait(false);
                 var json = JObject.Parse(body);
                 return new AlibabaCredentials(
                     json.Value<string>("AccessKeyId"),
                     json.Value<string>("AccessKeySecret"),
                     json.Value<string>("SecurityToken") ?? "");
+            }
+        }
+
+        private HttpClient CreateMetadataClient()
+        {
+            var client = _metadataHandler != null
+                ? new HttpClient(_metadataHandler, disposeHandler: false)
+                : new HttpClient();
+            client.Timeout = TimeSpan.FromSeconds(2);
+            return client;
+        }
+
+        private static async Task<string> FetchImdsV2TokenAsync(HttpClient client)
+        {
+            using (var request = CreateImdsV2TokenRequest())
+            using (var response = await client.SendAsync(request).ConfigureAwait(false))
+            {
+                response.EnsureSuccessStatusCode();
+                var token = (await response.Content.ReadAsStringAsync().ConfigureAwait(false)).Trim();
+                if (string.IsNullOrEmpty(token))
+                {
+                    throw new Exception("alibaba ECS metadata token is empty");
+                }
+                return token;
+            }
+        }
+
+        private static async Task<string> GetMetadataAsync(HttpClient client, string url, string token)
+        {
+            using (var request = CreateImdsGetRequest(url, token))
+            using (var response = await client.SendAsync(request).ConfigureAwait(false))
+            {
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             }
         }
 
