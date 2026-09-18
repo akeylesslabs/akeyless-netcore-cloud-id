@@ -19,6 +19,10 @@ namespace akeyless.Cloudid
             {
                 return new GcpCloudIdProvider();
             }
+            else if (accType == "alicloud")
+            {
+                return new AlibabaCloudIdProvider();
+            }
 
             throw new Exception("Unsupported type: " + accType);
         }

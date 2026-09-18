@@ -44,7 +44,7 @@ Configuration config = new Configuration();
 config.BasePath = host;
 var api = new V2Api(config);
 
-// Use azure_ad/aws_iam/gcp, according to your cloud provider
+// Use azure_ad/aws_iam/gcp/alicloud, according to your cloud provider
 var accessType = "aws_iam";
 var cloudIdProvider = CloudIdProviderFactory.GetCloudIdProvider(accessType);
 var cloudId = cloudIdProvider.GetCloudId();
